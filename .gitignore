@@ -163,3 +163,5 @@ cython_debug/
 
 data/
 jobs/
+code_inis/comet-cosmosis
+*.ipynb
