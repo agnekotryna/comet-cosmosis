@@ -98,6 +98,16 @@ def setup(options):
     params_fid_comet = {par: np.repeat(options.get_double(option_section, par), len(redshift)) for par in ['h', 'wc', 'wb', 'ns', 'As']}
     params_fid_comet['z'] = redshift
     
+    de_model = options.get_string(option_section, "de_model")
+    print ('Runnung DE model: ', de_model)
+    print ()
+    
+    if de_model == "lambda": None
+    elif de_model == "w0": 
+        params_fid_comet["w0"] = np.repeat(options.get_double(option_section, "w"), len(redshift))
+    else:
+        params_fid_comet["w0"] =  np.repeat(options.get_double(option_section, "w"), len(redshift))
+        params_fid_comet["wa"] =  np.repeat(options.get_double(option_section, "wa"), len(redshift))
     
     g21CoEvol = options.get_bool(option_section, "g21CoEvol")
     print ('Using g21 relation:', g21CoEvol)
@@ -109,7 +119,10 @@ def setup(options):
     
     print ('\033[1mInitialising emulator\033[0m')
     print ()
-    emu_model = 'EFT'
+    emu_model = options.get_string(option_section, "pt_model")
+    print ('Runnung PT model: ', emu_model)
+    print ()
+    
     emu = comet(model=emu_model, use_Mpc=False)
     
     print ('Setting fiducial cosmology with parameters:', params_fid_comet)
@@ -141,11 +154,11 @@ def setup(options):
         mps = np.asarray([pk0, pk2, pk4]).T
 
         emu.define_data_set(data_id[i], zeff=redshift[i], bins=k, signal=mps, cov=cov)
-    return emu, params_fid_comet, redshift, scale_cuts, data_id, g21CoEvol, g2ExSet, AM_priors, feedback
+    return emu, params_fid_comet, redshift, scale_cuts, data_id, g21CoEvol, g2ExSet, AM_priors, de_model, feedback
 
 def execute(block, config):
     
-    emu, params_fid_comet,redshift, scale_cuts, data_id, g21CoEvol, g2ExSet, AM_priors, feedback = config
+    emu, params_fid_comet,redshift, scale_cuts, data_id, g21CoEvol, g2ExSet, AM_priors, de_model, feedback = config
     
     cosmo = load_cosmology(block)
     
@@ -154,8 +167,20 @@ def execute(block, config):
     params['wc'] = np.repeat(cosmo["omch2"],len(redshift))  
     params['wb'] = np.repeat(cosmo["ombh2"],len(redshift))  
     params['ns'] = np.repeat( cosmo["n_s"] ,len(redshift)) 
-    params['As'] = np.repeat(cosmo["a_s"],len(redshift))  
+    params['As'] = np.repeat(cosmo["a_s"],len(redshift))
+    
+    if de_model == "lambda": None
+    elif de_model == "w0": 
+        params["w0"] =  np.repeat(block.get_double(names.cosmological_parameters, "w"),len(redshift))
+    else:
+        params["w0"] =  np.repeat(block.get_double(names.cosmological_parameters, "w"),len(redshift))
+        params["wa"] =  np.repeat(block.get_double(names.cosmological_parameters, "wa"),len(redshift))
+        
+        
     params['z'] = redshift
+    
+    print ('Runnung DE model: ', params)
+    print ()
     
     print("Execute mthod running....")
     bias_keys = np.asarray(list(block.keys()))
@@ -183,7 +208,7 @@ def execute(block, config):
     if g2ExSet: 
             params["g21"] = [g2f(b1) for b1 in params["b1"]]
     
-    chi2 = emu.chi2(data_id, params, scale_cuts, de_model="lambda", AM_priors=AM_priors)    
+    chi2 = emu.chi2(data_id, params, scale_cuts, de_model=de_model, AM_priors=AM_priors)    
     block["likelihoods", "my_like"] = -0.5*chi2[0]
     
     return 0
