@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.interpolate as interp
 from cosmosis.datablock import names, option_section
-from comet import comet
+from comet_developer import comet
 from comet.data import MeasuredData
 
 """

@@ -64,6 +64,7 @@ def setup(options):
     redshift = json.loads(options.get(option_section, "redshift"))
     print ('redshift =', redshift)
     print ()
+    redshift = np.array(redshift) #AS
     
     redshift_lab = [str(z).strip('0') for z in redshift]
     data_id = ['mps_z'+str(z).strip('0') for z in redshift]
@@ -125,6 +126,12 @@ def setup(options):
     
     emu = comet(model=emu_model, use_Mpc=False)
     
+
+    bias_basis = options.get_string(option_section, "bias_basis") #AS
+    emu.change_bias_basis(bias_basis) #AS
+    print ("Using bias basis "+bias_basis) #AS
+    print()
+
     print ('Setting fiducial cosmology with parameters:', params_fid_comet)
     emu.define_fiducial_cosmology(params_fid=params_fid_comet)
     print ()
@@ -186,7 +193,9 @@ def execute(block, config):
     bias_keys = np.asarray(list(block.keys()))
     bias_spec=bias_keys[:,1][np.where(bias_keys[:,0]=='bias_spec')]
     
-    
+    print ("These are the bias keys: "+str(bias_keys))
+    print ("This is bias_spec: "+ str(bias_spec))
+
     for bias in nuisance_params:
         params[bias] = []
     
@@ -195,7 +204,8 @@ def execute(block, config):
         bias = bias_bins.split("_")[0]
         
         if bias in ["np0", "np20", "np22"]: bias=bias.upper()
-        if bias in ["c0", "c2", "c4"]: params[bias].append(block.get_double("bias_spec", bias_bins)*cosmo["h0"]**2)
+        if bias in ["c0", "c2", "c4"]: 
+            params[bias].append(block.get_double("bias_spec", bias_bins)*cosmo["h0"]**2)
         else: params[bias].append(block.get_double("bias_spec", bias_bins))
         
         
@@ -208,7 +218,15 @@ def execute(block, config):
     if g2ExSet: 
             params["g21"] = [g2f(b1) for b1 in params["b1"]]
     
-    chi2 = emu.chi2(data_id, params, scale_cuts, de_model=de_model, AM_priors=AM_priors)    
-    block["likelihoods", "my_like"] = -0.5*chi2[0]
-    
+    #chi2 = emu.chi2(data_id, params, scale_cuts, de_model=de_model, AM_priors=AM_priors)    
+
+    for key, value in params.items(): #AS
+        params[key] = float(value[0]) #AS
+
+    print ("HERE are hte params going in to the emulator")
+    print (params)
+    chi2 = emu.chi2(data_id, params, scale_cuts, de_model=de_model)
+    #block["likelihoods", "my_like"] = -0.5*chi2[0]
+    block["likelihoods", "my_like"] = -0.5*chi2
+
     return 0
