@@ -159,9 +159,15 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-#foldeors
+#folders
 
 data/
 jobs/
 code_inis/comet-cosmosis
 *.ipynb
+
+# gc_ximultipoles versions - ignore all except 8p0, joint, and 5p3
+gc_ximultipoles_*/
+!gc_ximultipoles*8p0*/
+!gc_ximultipoles*joint*/
+!gc_ximultipoles*5p3*/
