@@ -77,6 +77,7 @@ def compute_reparam_factors(emu, params_i, sigma12_fid, D_fid, As_fid, de_model)
 nuisance_params_EggScoSmi = ['b1', 'b2', 'g2', 'g21', 'c0', 'c2', 'c4', 'cnlo', 'NP0', 'NP20', 'NP22']
 nuisance_params_AssBauGre = ['b1', 'b2', 'bG2', 'bGam3', 'c0', 'c2', 'c4', 'cnlo', 'NP0', 'NP20', 'NP22']
 
+
 def load_cosmology(block, de_model, lenz, mnu=False, trueAs=False):
 	"""
 	Read input cosmology from the datablock
@@ -565,8 +566,8 @@ def execute(block, config):
 
 			# b1 enters quadratically: rescale by sigma12 * sqrt(APfac)
 			params['b1'][ii_r] /= (sigma12 * np.sqrt(APfac))
-			# b2, c0, c2 enter linearly: rescale by sigma12^2 * APfac
-			params['b2'][ii_r] /= (sigma12**2 * APfac)
+			params['b2'][ii_r] /= (sigma12**2 * np.sqrt(APfac))
+			params['g2'][ii_r] /= (sigma12**2 * APfac)
 			params['c0'][ii_r] /= (sigma12**2 * APfac)
 			params['c2'][ii_r] /= (sigma12**2 * APfac)
 
